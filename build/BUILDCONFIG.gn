@@ -113,7 +113,9 @@ set_defaults("source_set") {
 if (is_win) {
   _linker_configs = []
 } else {
+  _linker_configs = []
 }
+
 
 # Executable defaults.
 set_defaults("executable") {
