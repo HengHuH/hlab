@@ -1,0 +1,3 @@
+# This file is part of the GN build system for hlab.
+
+buildconfig = "//build/BUILDCONFIG.gn"

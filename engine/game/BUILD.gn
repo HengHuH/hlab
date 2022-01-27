@@ -1,0 +1,8 @@
+# This file is part of the GN build system for hlab.
+
+group("game") {
+    deps = []
+    if (is_win) {
+        deps += ["pc:game"]
+    }
+}
