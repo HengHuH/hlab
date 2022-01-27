@@ -4,6 +4,6 @@ group("all") {
     deps = []
 
     deps += [
-        "//engine/game:game"
+        "//game:game"
     ]
 }
