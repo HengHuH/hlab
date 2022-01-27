@@ -1,12 +1,16 @@
 # Extension for shared library files (including leading dot).
 if (is_win) {
   shlib_extension = ".dll"
+} else if (is_apple) {
+  shlib_extension = ".dylib"
+} else if (is_posix) {
+  shlib_extension = ".so"
 } else {
   assert(false, "os not supported.")
 }
 
 # Prefix for shared library files.
-if (is_win) {
+if (is_posix) {
   shlib_prefix = "lib"
 } else {
   shlib_prefix = ""

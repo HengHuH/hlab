@@ -42,14 +42,10 @@ config("rtti") {
   if (use_rtti) {
     if (is_win) {
       cflags_cc = [ "/GR" ]
-    } else {
-      cflags_cc = [ "-frtti" ]
     }
   } else {
     if (is_win) {
       cflags_cc = [ "/GR-" ]
-    } else {
-      cflags_cc = [ "-fno-rtti" ]
     }
   }
 }
@@ -60,8 +56,6 @@ config("exceptions") {
   if (use_exceptions) {
     if (is_win) {
       cflags_cc = [ "/EHsc" ]
-    } else {
-      cflags_cc = [ "-fexceptions" ]
     }
   } else {
   }
@@ -227,31 +221,6 @@ config("symbols") {
 
     # All configs using /DEBUG should include this:
     configs = [ ":win_pdbaltpath" ]
-  } else {
-    if (is_apple) {
-      cflags = [ "-gdwarf-2" ]
-
-      if (is_mac && enable_dsyms) {
-        # If generating dSYMs, specify -fno-standalone-debug. This was
-        # originally specified for https://crbug.com/479841 because dsymutil
-        # could not handle a 4GB dSYM file. But dsymutil from Xcodes prior to
-        # version 7 also produces debug data that is incompatible with Breakpad
-        # dump_syms, so this is still required (https://crbug.com/622406).
-        cflags += [ "-fno-standalone-debug" ]
-      }
-    } else if (is_android) {
-      # Breakpad can't handle DWARF 4 symbols properly yet, so use DWARF 3
-      # explicitly on android where we are hitting https://crbug.com/638485.
-      # The arguments MUST be in this order because of a gcc arg parsing bug.
-      cflags = [
-        "-gdwarf-3",
-        "-g2",
-      ]
-    } else {
-      cflags = [ "-g2" ]
-    }
-
-    asmflags = cflags
   }
 }
 
@@ -268,10 +237,6 @@ config("minimal_symbols") {
     configs = [ ":win_pdbaltpath" ]
   } else {
     cflags = [ "-g1" ]
-
-    if (is_android) {
-      cflags += [ "-gdwarf-3" ]
-    }
     asmflags = cflags
   }
 }
@@ -285,9 +250,6 @@ config("no_symbols") {
 
     # All configs using /DEBUG should include this:
     configs = [ ":win_pdbaltpath" ]
-  } else {
-    cflags = [ "-g0" ]
-    asmflags = cflags
   }
 }
 
@@ -309,17 +271,13 @@ config("default_libs") {
   if (is_win) {
     libs = [
       "user32.lib",
+      "delayimp.lib",
+      "kernel32.lib",
+      "ole32.lib",
       # Please don't add more stuff here. We should actually be making this
       # list smaller, since all common things should be covered. If you need
       # some extra libraries, please just add a libs = [ "foo.lib" ] to your
       # target that needs it.
-    ]
-
-    # These libraries are not compatible with Windows UWP (i.e. store apps.)
-    libs += [
-      "delayimp.lib",
-      "kernel32.lib",
-      "ole32.lib",
     ]
   }
 }

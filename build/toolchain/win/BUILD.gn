@@ -153,3 +153,10 @@ msvc_toolchain("x64") {
     current_os = "x64"
   }
 }
+
+msvc_toolchain("x86") {
+  toolchain_args = {
+    current_cpu = "win"
+    current_os = "x86"
+  }
+}
