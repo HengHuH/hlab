@@ -1,0 +1,26 @@
+# Extension for shared library files (including leading dot).
+if (is_win) {
+  shlib_extension = ".dll"
+} else {
+  assert(false, "os not supported.")
+}
+
+# Prefix for shared library files.
+if (is_win) {
+  shlib_prefix = "lib"
+} else {
+  shlib_prefix = ""
+}
+
+stamp_description = "STAMP {{output}}"
+copy_description = "COPY {{source}} {{output}}"
+
+if (host_os == "win") {
+  copy_path =
+      rebase_path("//build/toolchain/win/recursive_mirror.py", root_build_dir)
+  stamp_command = "cmd /c type nul > \"{{output}}\""
+  copy_command = "$python_path $copy_path {{source}} {{output}}"
+} else {
+  stamp_command = "touch {{output}}"
+  copy_command = "ln -f {{source}} {{output}} 2>/dev/null || (rm -rf {{output}} && cp -af {{source}} {{output}})"
+}
