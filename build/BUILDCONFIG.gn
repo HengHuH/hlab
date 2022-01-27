@@ -1,25 +1,31 @@
 # This file is part of the GN build system for hlab.
 
 if (target_os == "") {
-    target_os = host_os
+  target_os = host_os
 }
 
 if (target_cpu == "") {
-    target_cpu = host_cpu
+  target_cpu = host_cpu
 }
 
 if (current_cpu == "") {
-    current_cpu = target_cpu
+  current_cpu = target_cpu
 }
 
 if (current_os == "") {
-    current_os = target_os
+  current_os = target_os
 }
 
-declare_args() {
-    custom_toolchain = ""
+# =============================================================================
+# BUILD FLAGS
+# =============================================================================
 
-    host_toolchain = ""
+declare_args() {
+  custom_toolchain = ""
+
+  host_toolchain = ""
+
+  is_debug = true
 }
 
 # =============================================================================
@@ -27,24 +33,23 @@ declare_args() {
 # =============================================================================
 
 if (host_toolchain == "") {
-    if (host_os == "win") {
-        host_toolchain = "//build/toolchain/win:$host_cpu"
-    }
-    else {
-        assert(false, "Unsupported host_os: $host_os")
-    }
+  if (host_os == "win") {
+    host_toolchain = "//build/toolchain/win:$host_cpu"
+  } else {
+    assert(false, "Unsupported host_os: $host_os")
+  }
 }
 
 _default_toolchain = ""
 
 if (target_os == "win") {
-    _default_toolchain = "//build/toolchain/win:$target_cpu"
+  _default_toolchain = "//build/toolchain/win:$target_cpu"
 }
 
 if (custom_toolchain != "") {
-    set_default_toolchain(custom_toolchain)
+  set_default_toolchain(custom_toolchain)
 } else if (_default_toolchain != "") {
-    set_default_toolchain(_default_toolchain)
+  set_default_toolchain(_default_toolchain)
 }
 
 # =============================================================================
@@ -52,3 +57,82 @@ if (custom_toolchain != "") {
 # =============================================================================
 
 is_win = current_os == "win"
+is_linux = current_os == "linux"
+is_android = current_os == "android"
+is_ios = current_os == "ios"
+is_mac = current_os == "mac"
+
+is_apple = is_ios || is_mac
+is_posix = !is_win
+
+# =============================================================================
+# OS DEFINITIONS
+# =============================================================================
+
+# Holds all configs used for running the compiler.
+default_compiler_configs = [
+  "//build/config:compiler",
+  "//build/config:default_optimization",
+  "//build/config:default_symbols",
+  "//build/config:language",
+  "//build/config:rtti",
+  "//build/config:exceptions",
+  "//build/config:runtime_library",
+]
+
+# Debug/Release related defines.
+if (is_debug) {
+  default_compiler_configs += [ "//build//config:debug" ]
+} else {
+  default_compiler_configs += [ "//build//config:release" ]
+}
+
+# OS
+if (is_win) {
+  default_compiler_configs += [
+    "//build/config/win:utf8",
+    "//build/config/win:default_crt",
+    "//build/config/win:lean_and_mean",
+    "//build/config/win:nominmax",
+    "//build/config/win:unicode",
+    "//build/config/win:winver",
+  ]
+} else {
+}
+
+# Static libraries and source sets use only the compiler configs.
+set_defaults("static_library") {
+  configs = default_compiler_configs
+}
+
+set_defaults("source_set") {
+  configs = default_compiler_configs
+}
+
+# Link common configs
+if (is_win) {
+  _linker_configs = []
+} else {
+}
+
+# Executable defaults.
+set_defaults("executable") {
+  configs = default_compiler_configs + [
+              "//build/config:default_libs",
+              "//build/config:executable_config",
+            ] + _linker_configs
+}
+
+# Shared library and loadable module defaults.
+default_shared_library_configs = default_compiler_configs + [
+                                   "//build/config/default_libs",
+                                   "//build/config/shared_library_config",
+                                 ] + _linker_configs
+
+set_defaults("shader_library") {
+  configs = default_shared_library_configs
+}
+
+set_defaults("loadable_module") {
+  configs = default_shared_library_configs
+}

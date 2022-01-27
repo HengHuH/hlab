@@ -1,0 +1,375 @@
+# This file is part of the GN build system for hlab.
+
+import("//build/config/compiler.gni")
+
+# compiler ---------------------------------------------------------------------
+#
+# Base compiler configuration.
+#
+# See also "runtime_library" below for related stuff and a discussion about
+# where stuff should go. Put warning related stuff in the "warnings" config.
+config("compiler") {
+  asmflags = []
+  cflags = []
+  cflags_c = []
+  cflags_cc = []
+  cflags_objc = []
+  cflags_objcc = []
+  ldflags = []
+  defines = []
+  configs = []
+
+  # System-specific flags. If your compiler flags apply to one of the
+  # categories here, add it to the associated file to keep this shared config
+  # smaller.
+  if (is_win) {
+    configs += [ "//build/config/win:compiler" ]
+  }
+
+  # See the definitions below.
+  configs += []
+
+  # Pass the same C/C++ flags to the objective C/C++ compiler.
+  cflags_objc += cflags_c
+  cflags_objcc += cflags_cc
+}
+
+# rtti -----------------------------------------------------------------------
+#
+# Allows turning Run-Time Type Identification on or off.
+
+config("rtti") {
+  if (use_rtti) {
+    if (is_win) {
+      cflags_cc = [ "/GR" ]
+    } else {
+      cflags_cc = [ "-frtti" ]
+    }
+  } else {
+    if (is_win) {
+      cflags_cc = [ "/GR-" ]
+    } else {
+      cflags_cc = [ "-fno-rtti" ]
+    }
+  }
+}
+
+# exceptions -----------------------------------------------------------------
+
+config("exceptions") {
+  if (use_exceptions) {
+    if (is_win) {
+      cflags_cc = [ "/EHsc" ]
+    } else {
+      cflags_cc = [ "-fexceptions" ]
+    }
+  } else {
+  }
+}
+
+# runtime_library -------------------------------------------------------------
+#
+# Sets the runtime library and associated options.
+#
+# How do you determine what should go in here vs. "compiler" above? Consider if
+# a target might choose to use a different runtime library (ignore for a moment
+# if this is possible or reasonable on your system). If such a target would want
+# to change or remove your option, put it in the runtime_library config. If a
+# target wants the option regardless, put it in the compiler config.
+
+config("runtime_library") {
+  defines = []
+  configs = []
+
+  if (is_win) {
+    configs += [ "//build/config/win:runtime_library" ]
+  }
+}
+
+# Optimization ---------------------------------------------------------------
+#
+# The default optimization applied to all targets. This will be equivalent to
+# either "optimize" or "optimize_debug", depending on the build flags.
+
+# Shared settings for both "optimize" and "optimize_max" configs.
+# IMPORTANT: On Windows "/O1" and "/O2" must go before the common flags.
+if (is_win) {
+  common_optimize_on_cflags = [
+    "/Ob2",  # Both explicit and auto inlining.
+    "/Oy-",  # Disable omitting frame pointers, must be after /O2.
+    "/Zo",  # Improve debugging of optimized code.
+    "/Zc:inline",  # Remove unreferenced COMDAT (faster links).
+  ]
+
+  common_optimize_on_ldflags = []
+
+  # /OPT:ICF is not desirable in Debug builds, since code-folding can result in
+  # misleading symbols in stack traces.
+  if (!is_debug) {
+    common_optimize_on_ldflags += [ "/OPT:ICF" ]  # Redundant COMDAT folding.
+  }
+} else {
+  common_optimize_on_cflags = []
+  common_optimize_on_ldflags = []
+}
+
+config("optimize") {
+  if (is_win) {
+    # Favor size over speed, /O1 must be before the common flags.
+    # /O1 implies /Os and /GF.
+    cflags = [ "/O1" ] + common_optimize_on_cflags + [ "/Oi" ]
+  } else {
+    cflags = [ "-O2" ] + common_optimize_on_cflags
+  }
+  ldflags = common_optimize_on_ldflags
+}
+
+config("no_optimize") {
+  if (is_win) {
+    cflags = [
+      "/Od",  # Disable optimization.
+      "/Ob0",  # Disable all inlining (on by default).
+      "/GF",  # Enable string pooling (off by default).
+    ]
+
+    if (target_cpu == "arm64") {
+      # Disable omitting frame pointers for no_optimize build because stack
+      # traces on Windows ARM64 rely on it.
+      cflags += [ "/Oy-" ]
+    }
+  } else {
+    cflags = [ "-O0" ]
+    ldflags = []
+  }
+}
+
+# Optimization options suited for debug builds.
+config("optimize_debug") {
+  if (is_win) {
+    # /OPT:ICF is not desirable in Debug builds, since code-folding can result in
+    # misleading symbols in stack traces. It is also incompatible with
+    # incremental linking, which we enable for both Debug and component builds.
+    ldflags = [
+      "/OPT:NOICF",  # Redundant COMDAT folding.
+      "/OPT:REF",  # Remove unreferenced data.
+    ]
+  } else {
+    cflags = [
+      # "Optimize debugging experience.
+      # -Og enables optimizations that do not interfere with debugging."
+      "-Og",
+    ]
+
+    cflags += common_optimize_on_cflags
+    ldflags += common_optimize_on_ldflags
+  }
+}
+
+# Turns up the optimization level. On Windows, this implies whole pragram
+# optimization and link-time code generation which is very expensive and should
+# be used sparingly.
+config("optimize_max") {
+  if (is_win) {
+    cflags = [ "/O2" ] + common_optimize_on_cflags
+  } else {
+    cflags = [ "-O3" ] + common_optimize_on_cflags
+  }
+  ldflags = common_optimize_on_ldflags
+}
+
+config("default_optimization") {
+  if (is_debug) {
+    if (optimize_debug) {
+      configs = [ ":optimize_debug" ]
+    } else {
+      configs = [ ":no_optimize" ]
+    }
+  } else {
+    configs = [ ":optimize" ]
+  }
+}
+
+# Symbols ----------------------------------------------------------------------
+
+# The BUILDCONFIG file sets the "default_symbols" config on targets by
+# default. It will be equivalent to one the three specific symbol levels.
+#
+# You can override the symbol level on a per-target basis by removing the
+# default config and then adding the named one you want:
+#
+#   configs -= [ "//build/config/compiler:default_symbols" ]
+#   configs += [ "//build/config/compiler:symbols" ]
+
+# A helper config that all configs passing /DEBUG to the linker should
+# include as sub-config.
+config("win_pdbaltpath") {
+  visibility = [
+    ":minimal_symbols",
+    ":symbols",
+  ]
+  # /DEBUG causes the linker to generate a pdb file, and to write the absolute
+  # path to it in the executable file it generates.  This flag turns that
+  # absolute path into just the basename of the pdb file, which helps with
+  # build reproducibility. Debuggers look for pdb files next to executables,
+  # so there's minimal downside to always using this. However, post-mortem
+  # debugging of Chromium crash dumps and ETW tracing can be complicated by this
+  # switch so an option to omit it is important.
+  #   if (!use_full_pdb_paths) {
+  # ldflags = [ "/pdbaltpath:%_PDB%" ]
+  #   }
+}
+
+# Full symbols.
+config("symbols") {
+  if (is_win) {
+    cflags = [ "/Zi" ]  # Produce PDB file, no edit and continue.
+    ldflags = [ "/DEBUG" ]
+
+    # All configs using /DEBUG should include this:
+    configs = [ ":win_pdbaltpath" ]
+  } else {
+    if (is_apple) {
+      cflags = [ "-gdwarf-2" ]
+
+      if (is_mac && enable_dsyms) {
+        # If generating dSYMs, specify -fno-standalone-debug. This was
+        # originally specified for https://crbug.com/479841 because dsymutil
+        # could not handle a 4GB dSYM file. But dsymutil from Xcodes prior to
+        # version 7 also produces debug data that is incompatible with Breakpad
+        # dump_syms, so this is still required (https://crbug.com/622406).
+        cflags += [ "-fno-standalone-debug" ]
+      }
+    } else if (is_android) {
+      # Breakpad can't handle DWARF 4 symbols properly yet, so use DWARF 3
+      # explicitly on android where we are hitting https://crbug.com/638485.
+      # The arguments MUST be in this order because of a gcc arg parsing bug.
+      cflags = [
+        "-gdwarf-3",
+        "-g2",
+      ]
+    } else {
+      cflags = [ "-g2" ]
+    }
+
+    asmflags = cflags
+  }
+}
+
+# Minimal symbols.
+# This config guarantees to hold symbol for stack trace which are shown to user
+# when crash happens in unittests running on buildbot.
+config("minimal_symbols") {
+  if (is_win) {
+    # Functions, files, and line tables only.
+    cflags = []
+    ldflags = [ "/DEBUG" ]
+
+    # All configs using /DEBUG should include this:
+    configs = [ ":win_pdbaltpath" ]
+  } else {
+    cflags = [ "-g1" ]
+
+    if (is_android) {
+      cflags += [ "-gdwarf-3" ]
+    }
+    asmflags = cflags
+  }
+}
+
+# This configuration contains function names only. That is, the compiler is
+# told to not generate debug information and the linker then just puts function
+# names in the final debug information.
+config("no_symbols") {
+  if (is_win) {
+    ldflags = [ "/DEBUG" ]
+
+    # All configs using /DEBUG should include this:
+    configs = [ ":win_pdbaltpath" ]
+  } else {
+    cflags = [ "-g0" ]
+    asmflags = cflags
+  }
+}
+
+# Default symbols.
+config("default_symbols") {
+  if (symbol_level == 0) {
+    configs = [ ":no_symbols" ]
+  } else if (symbol_level == 1) {
+    configs = [ ":minimal_symbols" ]
+  } else if (symbol_level == 2) {
+    configs = [ ":symbols" ]
+  } else {
+    assert(false)
+  }
+}
+
+# Default libraries -----------------------------------------------------------
+config("default_libs") {
+  if (is_win) {
+    libs = [
+      "user32.lib",
+      # Please don't add more stuff here. We should actually be making this
+      # list smaller, since all common things should be covered. If you need
+      # some extra libraries, please just add a libs = [ "foo.lib" ] to your
+      # target that needs it.
+    ]
+
+    # These libraries are not compatible with Windows UWP (i.e. store apps.)
+    libs += [
+      "delayimp.lib",
+      "kernel32.lib",
+      "ole32.lib",
+    ]
+  }
+}
+
+# Executable configs -----------------------------------------------------------
+
+# Windows linker setup for EXEs and DLLs.
+if (is_win) {
+  _windows_linker_configs = [
+    "//build/config/win:sdk_link",
+    "//build/config/win:common_linker_setup",
+  ]
+}
+
+# This config defines the configs applied to all executables.
+config("executable_config") {
+  configs = []
+
+  if (is_win) {
+    configs += _windows_linker_configs
+  }
+}
+
+# Shared library configs -------------------------------------------------------
+
+# This config defines the configs applied to all shared libraries.
+config("shared_library_config") {
+  configs = []
+
+  if (is_win) {
+    configs += _windows_linker_configs
+  }
+}
+
+# Language standard ---------------------------------------------------------
+config("language") {
+  if (is_win) {
+    cflags_c = [ "/std:c11" ]
+    cflags_cc = [ "/std:c++latest" ]
+  } else {
+    cflags_c = [ "-std=c11" ]
+    cflags_cc = [ "-std=c++1z" ]
+  }
+}
+
+# Debug/release ---------------------------------------------------------------
+config("debug") {
+  defines = [ "_DEBUG" ]
+}
+
+config("release") {
+  defines = [ "NDEBUG" ]
+}

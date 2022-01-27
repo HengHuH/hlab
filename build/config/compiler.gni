@@ -1,0 +1,20 @@
+# This file is part of the GN build system for hlab
+
+declare_args() {
+  # How many symbols to include in the build. This affects the performance of
+  # the build since the symbols are large and dealing with them is slow.
+  #   2 means regular build with symbols.
+  #   1 means minimal symbols, usually enough for backtraces only.
+  #   0 means no symbols.
+  symbol_level = 2
+
+  # Enable some optimizations that don't interfere with debugging.
+  optimize_debug = false
+
+  use_rtti = false
+
+  use_exceptions = false
+}
+
+# If it wasn't manually set, set to an appropriate default.
+assert(symbol_level >= 0 && symbol_level <= 2, "Invalid symbol_level")

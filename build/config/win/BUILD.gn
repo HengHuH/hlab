@@ -1,0 +1,122 @@
+# This file is part of the GN build system for hlab.
+
+config("compiler") {
+}
+
+# Sets the default source file encoding to UTF-8.
+# Without this, the system code page is used.
+config("utf8") {
+  cflags = [ "/utf-8" ]
+}
+
+config("runtime_library") {
+}
+
+# Sets the default Windows build version. This is separated because some
+# targets need to manully override it for their compilers.
+config("winver") {
+  defines = [
+    "NTDDI_VERSION=0x0A000000",
+    "_WIN32_WINNT=0x0A00",
+    "WINVER=0x0A00",
+  ]
+}
+
+# Linker flags for Windows SDK setup, this is applied only to EXEs and DLLs.
+config("sdk_link") {
+  assert(current_cpu == "x64" || current_cpu == "x86" || current_cpu == "arm" ||
+             current_cpu == "arm64",
+         "Only supports x64, x86, arm and arm64 CPUs")
+  lib_dirs = []
+}
+
+# This default linker setup is provided separately from the SDK setup so
+# targets who want different library configurations can remove this is specify
+# their own.
+config("common_linker_setup") {
+}
+
+# CRT --------------------------------------------------------------------------
+
+# Configures how the runtime library (CRT) is going to be used.
+# See https://msdn.microsoft.com/en-us/library/2kzt1wy3.aspx for a reference of
+# what each value does.
+config("default_crt") {
+  if (current_os == "winuwp") {
+    # https://blogs.msdn.microsoft.com/vcblog/2014/06/10/the-great-c-runtime-crt-refactoring/
+    # contains a details explanation of what is happening with the Windows
+    # CRT in Visual Studio releases related to Windows store applications.
+    configs = [ ":dynamic_crt" ]
+  } else {
+    # Desktop Windows: static CRT.
+    configs = [ ":static_crt" ]
+  }
+}
+
+config("dynamic_crt") {
+  if (is_debug) {
+    cflags = [ "/MDd" ]
+  } else {
+    cflags = [ "/MD" ]
+  }
+}
+
+config("static_crt") {
+  if (is_debug) {
+    cflags = [ "/MTd" ]
+  } else {
+    cflags = [ "/MT" ]
+  }
+}
+
+# Subsystem --------------------------------------------------------------------
+
+# This is appended to the subsystem to specify a minimum version.
+if (current_cpu == "x64") {
+  # The number after the comma is the minimum required OS version.
+  # 5.02 = Windows Server 2003.
+  subsystem_version_suffix = ",5.02"
+} else if (current_cpu == "arm64") {
+  # Windows ARM64 requires Windows 10.
+  subsystem_version_suffix = ",10.0"
+} else {
+  # 5.01 = Windows XP.
+  subsystem_version_suffix = ",5.01"
+}
+
+config("console") {
+  ldflags = [ "/SUBSYSTEM:CONSOLE$subsystem_version_suffix" ]
+}
+
+config("windowed") {
+  ldflags = [ "/SUBSYSTEM:WINDOWS$subsystem_version_suffix" ]
+}
+
+# Character set --------------------------------------------------------------
+
+# Not include this config means "ansi" (8-bit system codepage)
+config("unicode") {
+  defines = [
+    "_UNICODE",
+    "UNICODE",
+  ]
+}
+
+# Lean and mean --------------------------------------------------------------
+
+# Some third party code might not compile with WIN32_LEAN_AND_MEAN so we have
+# to have a separate config for it. Remove this config from your target to
+# get the "bloaty and accomodating" version of windows.h.
+config("lean_and_mean") {
+  defines = [ "WIN32_LEAN_AND_MEAN" ]
+}
+
+# Nominmax -------------------------------------------------------------------
+
+# Some third party code defines NOMINMAX before include windows.h, which
+# then causes warnings when it's been previously defined on the command line.
+# For such targets, this config can be removed.
+
+config("nominmax") {
+  defines = [ "NOMINMAX" ]
+}

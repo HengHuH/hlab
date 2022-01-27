@@ -1,7 +1,7 @@
 # This file is part of the GN build system for hlab.
 
 # import("//build/toolchain/win/settings.gni")
-import ("//build/toolchain/toolchain.gni")
+import("//build/toolchain/toolchain.gni")
 
 # Should only be running on Windows.
 assert(is_win)
@@ -99,7 +99,8 @@ template("msvc_toolchain") {
 
       # The use of inputs_newline is to work arround a fixed per-line buffer
       # size in the linker.
-      rspfile_content = "{{libs}} {{solibs}} {{inputs_newline}} {{ldflags}} {{rlibs}}"
+      rspfile_content =
+          "{{libs}} {{solibs}} {{inputs_newline}} {{ldflags}} {{rlibs}}"
     }
 
     tool("link") {
@@ -124,7 +125,8 @@ template("msvc_toolchain") {
 
       # The use of inputs_newline is to work aroud a fixed per-line buffer
       # size in the linker
-      rspfile_content = "{{inputs_newline}} {{libs}} {{solibs}} {{ldflags}} {{rlibs}}"
+      rspfile_content =
+          "{{inputs_newline}} {{libs}} {{solibs}} {{ldflags}} {{rlibs}}"
     }
 
     tool("stamp") {
