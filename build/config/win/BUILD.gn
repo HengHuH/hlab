@@ -1,5 +1,7 @@
 # This file is part of the GN build system for hlab.
 
+import("//build/toolchain/win/settings.gni")
+
 config("compiler") {
 }
 
@@ -27,7 +29,30 @@ config("sdk_link") {
   assert(current_cpu == "x64" || current_cpu == "x86" || current_cpu == "arm" ||
              current_cpu == "arm64",
          "Only supports x64, x86, arm and arm64 CPUs")
-  lib_dirs = []
+  vcvars_toolchain_data = exec_script("../../toolchain/win/toolchain.py",
+                                      [
+                                        "setup_toolchain",
+                                        visual_studio_path,
+                                        windows_sdk_path,
+                                        visual_studio_runtime_dirs,
+                                        current_os,
+                                        current_cpu,
+                                        "none",
+                                      ],
+                                      "scope")
+  vc_lib_path = vcvars_toolchain_data.vc_lib_path
+  if (defined(vcvars_toolchain_data.vc_lib_atlmfc_path)) {
+    vc_lib_atlmfc_path = vcvars_toolchain_data.vc_lib_atlmfc_path
+  }
+  vc_lib_um_path = vcvars_toolchain_data.vc_lib_um_path
+
+  lib_dirs = [
+    "$vc_lib_um_path",
+    "$vc_lib_path",
+  ]
+  if (defined(vc_lib_atlmfc_path)) {
+    lib_dirs += ["$vc_lib_atlmfc_path"]
+  }
 }
 
 # This default linker setup is provided separately from the SDK setup so

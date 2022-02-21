@@ -21,12 +21,22 @@ if (current_os == "") {
 # =============================================================================
 
 declare_args() {
+  # Set to enable the official build level of optimization.
+  # IMPORTANT NOTE: (!is_debug) is *not* sufficient to get satisfying.
+  # set "is_official_build" to true for any build intended to ship to end-users.
+  is_official_build = false
+
   custom_toolchain = ""
 
+  # This should not normally be set as a build argument.
   host_toolchain = ""
-
-  is_debug = true
 }
+
+declare_args() {
+  is_debug = !is_official_build
+}
+
+assert(!(is_debug && is_official_build), "Can't do official debug builds")
 
 # =============================================================================
 # TOOLCHAIN SETUP
@@ -111,7 +121,9 @@ set_defaults("source_set") {
 
 # Link common configs
 if (is_win) {
-  _linker_configs = []
+  _linker_configs = [
+    "//build/config/win:console"
+  ]
 } else {
   _linker_configs = []
 }

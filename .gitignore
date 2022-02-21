@@ -53,3 +53,5 @@ dkms.conf
 
 # gn build out
 /out/
+
+*.pyc

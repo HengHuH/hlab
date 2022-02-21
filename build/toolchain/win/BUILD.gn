@@ -26,7 +26,7 @@ template("msvc_toolchain") {
 
     # Wrappers
     env_wrapper = "ninja -t msvc -e $env -- "  # Note trailing space.
-    linker_wrapper = "ninja -t msvc -e $env --  "  # Note trailing space.
+    linker_wrapper = "ninja -t msvc -e $env -- "  # Note trailing space.
 
     show_includes = "/showIncludes"
 
