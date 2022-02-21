@@ -2,6 +2,13 @@
 
 import("//build/toolchain/win/settings.gni")
 
+assert(is_win)
+
+declare_args() {
+  # Turn this on to have the linker output extra timing information.
+  win_linker_timing = false
+
+}
 config("compiler") {
 }
 
@@ -51,7 +58,7 @@ config("sdk_link") {
     "$vc_lib_path",
   ]
   if (defined(vc_lib_atlmfc_path)) {
-    lib_dirs += ["$vc_lib_atlmfc_path"]
+    lib_dirs += [ "$vc_lib_atlmfc_path" ]
   }
 }
 
@@ -59,6 +66,20 @@ config("sdk_link") {
 # targets who want different library configurations can remove this is specify
 # their own.
 config("common_linker_setup") {
+  ldflags = [
+    "/FIXED:NO",
+    "/ignore:4199",
+    "/ignore:4221",
+    "/NXCOMPAT",
+    "/DYNAMICBASE",
+  ]
+
+  if (win_linker_timing) {
+    ldflags += [
+      "/time",
+      "/verbose:incr",
+    ]
+  }
 }
 
 # CRT --------------------------------------------------------------------------

@@ -5,6 +5,8 @@ import("//build/toolchain/toolchain.gni")
 
 # Should only be running on Windows.
 assert(is_win)
+# This tool will is used as a wrapper for various commands below.
+tool_wrapper_path = rebase_path("tool_wrapper.py", root_build_dir)
 
 template("msvc_toolchain") {
   toolchain(target_name) {
@@ -26,7 +28,11 @@ template("msvc_toolchain") {
 
     # Wrappers
     env_wrapper = "ninja -t msvc -e $env -- "  # Note trailing space.
-    linker_wrapper = "ninja -t msvc -e $env -- "  # Note trailing space.
+
+    # link.exe must be run under a wrapper to set up the environment
+    # (it needs %LIB% set to find libraries), and to work around its bugs.
+    link_wrapper_path = rebase_path("//build/toolchain/win/link_wrapper.py", root_build_dir)
+    linker_wrapper = "$python_path $link_wrapper_path $env False "  # Note trailing space.
 
     show_includes = "/showIncludes"
 
