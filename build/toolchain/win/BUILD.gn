@@ -1,7 +1,6 @@
 # This file is part of the GN build system for hlab.
 
 import("//build/toolchain/toolchain.gni")
-# import("//build/toolchain/win/settings.gni")
 
 # Should only be running on Windows.
 assert(is_win)
