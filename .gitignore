@@ -31,4 +31,4 @@
 # git
 !*.gitkeep
 !/.gitignore
-!/.gitattribute
+!/.gitattributes
