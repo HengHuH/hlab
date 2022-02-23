@@ -1,7 +1,7 @@
 # This file is part of the GN build system for hlab.
 
 import("//build/toolchain/toolchain.gni")
-import("//build/toolchain/win/settings.gni")
+# import("//build/toolchain/win/settings.gni")
 
 # Should only be running on Windows.
 assert(is_win)
@@ -18,13 +18,16 @@ template("msvc_toolchain") {
         forward_variables_from(invoker.toolchain_args, "*")
       }
     }
-    vc_bin_dir = invoker.vc_bin_dir
+
+    # Make these apply to all tools below.
+    lib_switch = ""
+    lib_dir_switch = "/LIBPATH"
 
     object_subdir = "{{target_out_dir}}/{{label_name}}"
 
-    cl = "$vc_bin_dir/cl.exe"
-    lib = "$vc_bin_dir/lib.exe"
-    link = "$vc_bin_dir/link.exe"
+    cl = "cl.exe"
+    lib = "lib.exe"
+    link = "link.exe"
 
     show_includes = "/showIncludes"
 
@@ -156,9 +159,6 @@ template("win_toolchains") {
   toolchain_arch = invoker.toolchain_arch
 
   msvc_toolchain(target_name) {
-    bin_data = exec_script("toolchain.py", ["get_vc_bin_dir", visual_studio_path, msvc_version, toolchain_arch], "scope")
-    vc_bin_dir = bin_data.vc_bin_path
-
     toolchain_args = {
       current_os = "win"
       current_cpu = toolchain_arch

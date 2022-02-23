@@ -6,8 +6,6 @@ import collections
 import os
 import sys
 import platform
-# import re
-# import subprocess
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 from gn_helpers import ToGNString
@@ -21,14 +19,6 @@ MSVS_VERSIONS = collections.OrderedDict([
     ('2022', '17.0'),
     ('2017', '15.0'),
 ])
-
-# # List of preferred VC toolset version based on MSVS
-# # Order is not relevant for this dictionary.
-# MSVC_TOOLSET_VERSION = {
-#     '2022': 'VC143',
-#     '2019': 'VC142',
-#     '2017': 'VC141',
-# }
 
 
 def DetectVisualStudioPath():
@@ -132,27 +122,9 @@ runtime_dirs = %s
        ToGNString(os.path.pathsep.join(runtime_dll_dirs or ['None']))))
 
 
-def FindFileInEnvList(env, env_name, separator, file_name, optional=False):
-    parts = env[env_name].split(separator)
-    for path in parts:
-        if os.path.exists(os.path.join(path, file_name)):
-            return os.path.realpath(path)
-    assert optional, "%s is not found in %s:\n%s\nCheck if it is installed." % (
-        file_name, env_name, '\n'.join(parts))
-    return ''
-
-
-def get_vc_bin_dir(vs_path, msvc_version, target_cpu):
-    bitness = platform.architecture()[0]
-    host_bit = 'Hostx64' if bitness == '64bit' else 'Hostx86'
-    bin_path = os.path.join(vs_path, 'VC', 'Tools', 'MSVC', msvc_version, 'bin', host_bit, target_cpu)
-    print('''vc_bin_path = %s''' % ToGNString(bin_path))
-
-
 def main():
     commands = {
         "auto_detect_toolchain": auto_detect_toolchain,
-        "get_vc_bin_dir": get_vc_bin_dir,
     }
 
     if len(sys.argv) < 2 or sys.argv[1] not in commands:

@@ -1,7 +1,5 @@
 # This file is part of the GN build system for hlab.
 
-import("//build/toolchain/win/settings.gni")
-
 assert(is_win)
 
 declare_args() {
@@ -10,13 +8,6 @@ declare_args() {
 }
 
 config("compiler") {
-  include_dirs = [
-    "$visual_studio_path/VC/Tools/MSVC/$msvc_version/include",
-    "$windows_sdk_path/Include/$windows_sdk_version/shared",
-    "$windows_sdk_path/Include/$windows_sdk_version/ucrt",
-    "$windows_sdk_path/Include/$windows_sdk_version/um",
-    "$windows_sdk_path/Include/$windows_sdk_version/winrt",
-  ]
 }
 
 # Sets the default source file encoding to UTF-8.
@@ -26,6 +17,17 @@ config("utf8") {
 }
 
 config("runtime_library") {
+  cflags = []
+  defines = [ "_CRT_SECURE_NO_DEPRECATE" ]
+
+  defines += [
+    "WIN32",
+    "_SECURE_ATL",
+  ]
+
+    # When not targeting Windows Runtime, make sure the WINAPI family is set
+    # to desktop.
+    defines += [ "WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP" ]
 }
 
 # Sets the default Windows build version. This is separated because some
@@ -53,16 +55,6 @@ config("sdk_link") {
   } else if (current_cpu == "arm64") {
     ldflags = [ "/MACHINE:ARM64" ]
   }
-
-  vc_lib_path = "$visual_studio_path/VC/Tools/MSVC/$msvc_version/lib/$target_cpu"
-  vc_lib_um_path = "$windows_sdk_path/Lib/$windows_sdk_version/um/$target_cpu"
-  vc_lib_ucrt_path = "$windows_sdk_path/Lib/$windows_sdk_version/ucrt/$target_cpu"
-
-  lib_dirs = [
-    "$vc_lib_path",
-    "$vc_lib_um_path",
-    "$vc_lib_ucrt_path"
-  ]
 }
 
 # This default linker setup is provided separately from the SDK setup so

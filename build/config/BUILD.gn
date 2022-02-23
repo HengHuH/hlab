@@ -274,6 +274,7 @@ config("default_libs") {
       "delayimp.lib",
       "kernel32.lib",
       "ole32.lib",
+
       # Please don't add more stuff here. We should actually be making this
       # list smaller, since all common things should be covered. If you need
       # some extra libraries, please just add a libs = [ "foo.lib" ] to your
