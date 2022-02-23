@@ -5,8 +5,13 @@
 #include <Windows.h>
 #include "resource.h"
 
+static int quit = 0;
+
 static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    if (msg == WM_DESTROY) {
+        quit = 1;
+    }
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
@@ -14,29 +19,29 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, char *lpCmdLine, int nCmdShow)
 {
     // printf("Hello HLab.");
-    const HICON icon = LoadIcon(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDI_MAIN));
+    const HICON icon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCEW(IDI_MAIN));
 
-    WNDCLASSEXW wcexw = {0};
-    wcexw.cbSize = sizeof(WNDCLASSEXW);
-    wcexw.style = CS_DBLCLKS;
-    wcexw.lpfnWndProc = (WNDPROC)WindowProc;
-    wcexw.cbClsExtra = 0;
-    wcexw.cbWndExtra = 0;
-    wcexw.hInstance = hInstance;
-    wcexw.hIcon = icon;
-    wcexw.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcexw.hbrBackground = NULL;
-    wcexw.lpszMenuName = NULL;
-    wcexw.lpszClassName = L"Heng";
-    wcexw.hIconSm = icon;
+    WNDCLASSEX wcex = {0};
+    wcex.cbSize = sizeof(WNDCLASSEXW);
+    wcex.style = CS_DBLCLKS;
+    wcex.lpfnWndProc = (WNDPROC)WindowProc;
+    wcex.cbClsExtra = 0;
+    wcex.cbWndExtra = 0;
+    wcex.hInstance = hInstance;
+    wcex.hIcon = icon;
+    wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground = NULL;
+    wcex.lpszMenuName = NULL;
+    wcex.lpszClassName = L"Heng";
+    wcex.hIconSm = icon;
 
-    if (!RegisterClassExW(&wcexw))
+    if (!RegisterClassEx(&wcex))
     {
         MessageBoxW(NULL, L"Failed to create window.", L"Error", MB_OK);
         ExitProcess(127);
     }
 
-    HWND hwnd = CreateWindowExW(
+    HWND hwnd = CreateWindowEx(
         0,
         L"Heng",
         L"Hlab",
@@ -49,17 +54,26 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, char *lpCmdLi
 
     if (!hwnd)
     {
-        MessageBoxW(NULL, L"Failed to create window.", L"Error", MB_OK);
+        MessageBox(NULL, L"Failed to create window.", L"Error", MB_OK);
         ExitProcess(127);
     }
     ShowWindow(hwnd, SW_SHOW);
 
+    // RUN
     MSG msg = {0};
-    while (GetMessageW(&msg, NULL, 0, 0) > 0)
+    while (!quit)
     {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        while (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE) != 0)
+        {
+            if (msg.message == WM_DESTROY)
+            {
+                PostQuitMessage(0);
+                break;
+            }
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        SleepEx(0, TRUE);
     }
-
     return 0;
 }
