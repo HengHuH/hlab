@@ -6,9 +6,9 @@ Heng's Laboratory.
 
 **平台**
 
-| 平台 | 编译器 | target cpu |
+| 平台 | 编译器 | cpu |
 | -- | -- | -- |
-| Windows | msvc | x64,x86 |
+| win32 | msvc | x64 |
 
 **依赖**
 
