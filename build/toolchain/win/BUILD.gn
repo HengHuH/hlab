@@ -29,7 +29,7 @@ template("msvc_toolchain") {
     lib = "lib.exe"
     link = "link.exe"
 
-    show_includes = "/showIncludes"
+    show_includes = ""
 
     tool("cc") {
       precompiled_header_type = "msvc"

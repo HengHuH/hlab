@@ -4,4 +4,8 @@ executable("game") {
     sources = [
         "game.c",
     ]
+
+    configs += [
+        "//build/config/win:windowed"
+    ]
 }
