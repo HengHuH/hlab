@@ -9,7 +9,8 @@ static int quit = 0;
 
 static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    if (msg == WM_DESTROY) {
+    if (msg == WM_DESTROY)
+    {
         quit = 1;
     }
     return DefWindowProcW(hwnd, msg, wParam, lParam);
@@ -21,19 +22,19 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, char *lpCmdLi
     // printf("Hello HLab.");
     const HICON icon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCEW(IDI_MAIN));
 
-    WNDCLASSEX wcex = {0};
-    wcex.cbSize = sizeof(WNDCLASSEXW);
-    wcex.style = CS_DBLCLKS;
-    wcex.lpfnWndProc = (WNDPROC)WindowProc;
-    wcex.cbClsExtra = 0;
-    wcex.cbWndExtra = 0;
-    wcex.hInstance = hInstance;
-    wcex.hIcon = icon;
-    wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground = NULL;
-    wcex.lpszMenuName = NULL;
-    wcex.lpszClassName = L"Heng";
-    wcex.hIconSm = icon;
+    WNDCLASSEX wcex = {
+        .cbSize = sizeof(WNDCLASSEXW),
+        .style = CS_DBLCLKS,
+        .lpfnWndProc = (WNDPROC)WindowProc,
+        .cbClsExtra = 0,
+        .cbWndExtra = 0,
+        .hInstance = hInstance,
+        .hIcon = icon,
+        .hCursor = LoadCursor(NULL, IDC_ARROW),
+        .hbrBackground = NULL,
+        .lpszMenuName = NULL,
+        .lpszClassName = L"Heng",
+        .hIconSm = icon};
 
     if (!RegisterClassEx(&wcex))
     {
