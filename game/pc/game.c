@@ -15,7 +15,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, char *lpCmdLi
 {
     // printf("Hello HLab.");
     const HICON icon = LoadIcon(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDI_MAIN));
-    
+
     WNDCLASSEXW wcexw = {0};
     wcexw.cbSize = sizeof(WNDCLASSEXW);
     wcexw.style = CS_DBLCLKS;
@@ -45,8 +45,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, char *lpCmdLi
         NULL,
         NULL,
         hInstance,
-        NULL
-    );
+        NULL);
 
     if (!hwnd)
     {
@@ -54,6 +53,13 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, char *lpCmdLi
         ExitProcess(127);
     }
     ShowWindow(hwnd, SW_SHOW);
+
+    MSG msg = {0};
+    while (GetMessageW(&msg, NULL, 0, 0) > 0)
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
 
     return 0;
 }
