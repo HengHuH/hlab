@@ -29,6 +29,9 @@
 # markdown
 !*.md
 
+# pc
+!*.ico
+
 # git
 !*.gitkeep
 !/.gitignore
