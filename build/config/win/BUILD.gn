@@ -8,6 +8,22 @@ declare_args() {
 }
 
 config("compiler") {
+  if (current_cpu == "x86") {
+    asmflags = [
+      # When /safeseh is specified, the linker will only produce an image if it
+      # can also produce a table of the image's safe exception handlers. This
+      # table specifies for the operating system which exception handlers are
+      # valid for the image. Note that /SAFESEH isn't accepted on the command
+      # line, only /safeseh. This is only accepted by ml.exe, not ml64.exe.
+      "/safeseh",
+    ]
+  }
+
+  cflags = [
+    "/Gy",  # Enable function-level linking.
+    "/FS",  # Preserve previous PDB behavior.
+    # "/bigobj",  # Some of our files are bigger than the regular limits.
+  ]
 }
 
 # Sets the default source file encoding to UTF-8.
