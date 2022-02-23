@@ -6,8 +6,8 @@
 
 // WinMain
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, char *lpCmdLine, int nCmdShow)
-// int main(int argc, char** args)
 {
     printf("Hello HLab.");
+    MessageBoxW(NULL, L"Hello", L"Error", MB_OK);
     return 0;
 }
