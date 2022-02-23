@@ -24,6 +24,8 @@ config("compiler") {
     "/FS",  # Preserve previous PDB behavior.
     # "/bigobj",  # Some of our files are bigger than the regular limits.
   ]
+  
+  ldflags = []
 }
 
 # Sets the default source file encoding to UTF-8.
