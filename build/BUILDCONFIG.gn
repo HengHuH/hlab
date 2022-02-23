@@ -86,8 +86,8 @@ default_compiler_configs = [
   "//build/config:default_optimization",
   "//build/config:default_symbols",
   "//build/config:language",
-  "//build/config:rtti",
-  "//build/config:exceptions",
+  "//build/config:no_rtti",
+  "//build/config:no_exceptions",
   "//build/config:runtime_library",
 ]
 

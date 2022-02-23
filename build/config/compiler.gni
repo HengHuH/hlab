@@ -10,10 +10,6 @@ declare_args() {
 
   # Enable some optimizations that don't interfere with debugging.
   optimize_debug = false
-
-  use_rtti = false
-
-  use_exceptions = false
 }
 
 # If it wasn't manually set, set to an appropriate default.
