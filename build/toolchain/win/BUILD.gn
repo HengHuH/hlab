@@ -1,10 +1,11 @@
 # This file is part of the GN build system for hlab.
 
-import("//build/toolchain/win/settings.gni")
 import("//build/toolchain/toolchain.gni")
+import("//build/toolchain/win/settings.gni")
 
 # Should only be running on Windows.
 assert(is_win)
+
 # This tool will is used as a wrapper for various commands below.
 tool_wrapper_path = rebase_path("tool_wrapper.py", root_build_dir)
 
@@ -17,22 +18,13 @@ template("msvc_toolchain") {
         forward_variables_from(invoker.toolchain_args, "*")
       }
     }
+    vc_bin_dir = invoker.vc_bin_dir
 
     object_subdir = "{{target_out_dir}}/{{label_name}}"
 
-    # environment
-    env = invoker.environment
-    cl = invoker.cl
-    link = "link.exe"
-    lib = "lib.exe"
-
-    # Wrappers
-    env_wrapper = "ninja -t msvc -e $env -- "  # Note trailing space.
-
-    # link.exe must be run under a wrapper to set up the environment
-    # (it needs %LIB% set to find libraries), and to work around its bugs.
-    link_wrapper_path = rebase_path("//build/toolchain/win/link_wrapper.py", root_build_dir)
-    linker_wrapper = "$python_path $link_wrapper_path $env False "  # Note trailing space.
+    cl = "$vc_bin_dir/cl.exe"
+    lib = "$vc_bin_dir/lib.exe"
+    link = "$vc_bin_dir/link.exe"
 
     show_includes = "/showIncludes"
 
@@ -47,7 +39,7 @@ template("msvc_toolchain") {
       description = "CC {{output}}"
       outputs = [ "$object_subdir/{{source_name_part}}.obj" ]
 
-      command = "$env_wrapper$cl /c {{source}} /nologo $show_includes {{defines}} {{include_dirs}} {{cflags}} {{cflags_c}} /Fo{{output}} /Fd\"$pdbname\""
+      command = "$cl /c {{source}} /nologo $show_includes {{defines}} {{include_dirs}} {{cflags}} {{cflags_c}} /Fo{{output}} /Fd\"$pdbname\""
     }
 
     tool("cxx") {
@@ -61,12 +53,12 @@ template("msvc_toolchain") {
       description = "CXX {{output}}"
       outputs = [ "$object_subdir/{{source_name_part}}.obj" ]
 
-      command = "$env_wrapper$cl /c {{source}} /Fo{{output}} /nologo $show_includes {{defines}} {{include_dirs}} {{cflags}} {{cflags_cc}} /Fd\"$pdbname\""
+      command = "$cl /c {{source}} /Fo{{output}} /nologo $show_includes {{defines}} {{include_dirs}} {{cflags}} {{cflags_cc}} /Fd\"$pdbname\""
     }
 
     tool("alink") {
       rspfile = "{{output}}.rsp"
-      command = "$linker_wrapper$lib /OUT:{{output}} /nologo {{arflags}} @$rspfile"
+      command = "$lib /OUT:{{output}} /nologo {{arflags}} @$rspfile"
       description = "LIB {{output}}"
       outputs = [
         # Ignore {{output_extension}} and always use .lib, there is no reason to
@@ -87,7 +79,7 @@ template("msvc_toolchain") {
 
       pool = "//build/toolchain:link_pool($default_toolchain)"
 
-      command = "$linker_wrapper$link /OUT:$dllname /nologo /IMPLIB:$libname /DLL /PDB:$pdbname @$rspfile"
+      command = "$link /OUT:$dllname /nologo /IMPLIB:$libname /DLL /PDB:$pdbname @$rspfile"
 
       default_output_extension = ".dll"
       default_output_dir = "{{root_out_dir}}"
@@ -123,7 +115,7 @@ template("msvc_toolchain") {
 
       pool = "//build/toolchain:link_pool($default_toolchain)"
 
-      command = "$linker_wrapper$link /OUT:$exename /nologo /PDB:$pdbname @$rspfile"
+      command = "$link /OUT:$exename /nologo /PDB:$pdbname @$rspfile"
 
       default_output_dir = "{{root_out_dir}}"
       default_output_extension = ".exe"
@@ -163,21 +155,9 @@ template("win_toolchains") {
   assert(defined(invoker.toolchain_arch))
   toolchain_arch = invoker.toolchain_arch
 
-  win_toolchain_data = exec_script("toolchain.py",
-                          [
-                            "setup_toolchain",
-                            visual_studio_path,
-                            windows_sdk_path,
-                            visual_studio_runtime_dirs,
-                            "win",
-                            toolchain_arch,
-                            "environment." + toolchain_arch
-                          ],
-                          "scope")
-
   msvc_toolchain(target_name) {
-    environment = "environment." + toolchain_arch
-    cl = "${win_toolchain_data.vc_bin_dir}/cl.exe"
+    bin_data = exec_script("toolchain.py", ["get_vc_bin_dir", visual_studio_path, msvc_version, toolchain_arch], "scope")
+    vc_bin_dir = bin_data.vc_bin_path
 
     toolchain_args = {
       current_os = "win"

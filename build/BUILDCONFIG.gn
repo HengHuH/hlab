@@ -97,7 +97,7 @@ if (is_debug) {
   default_compiler_configs += [ "//build//config:release" ]
 }
 
-# OS
+# OS dependency
 if (is_win) {
   default_compiler_configs += [
     "//build/config/win:utf8",
@@ -108,6 +108,7 @@ if (is_win) {
     "//build/config/win:winver",
   ]
 } else {
+  default_compiler_configs += []
 }
 
 # Static libraries and source sets use only the compiler configs.
@@ -143,10 +144,6 @@ default_shared_library_configs = default_compiler_configs + [
                                    "//build/config/shared_library_config",
                                  ] + _linker_configs
 
-set_defaults("shader_library") {
-  configs = default_shared_library_configs
-}
-
-set_defaults("loadable_module") {
+set_defaults("shared_library") {
   configs = default_shared_library_configs
 }
