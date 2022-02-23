@@ -178,7 +178,11 @@ config("default_optimization") {
     } else {
       configs = [ ":no_optimize" ]
     }
-  } else {
+  } else if (is_official_build) 
+  {
+    configs = [ ":optimize_max"]
+  }
+  else {
     configs = [ ":optimize" ]
   }
 }
