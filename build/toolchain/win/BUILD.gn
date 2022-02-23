@@ -58,6 +58,13 @@ template("msvc_toolchain") {
       command = "$cl /c {{source}} /Fo{{output}} /nologo $show_includes {{defines}} {{include_dirs}} {{cflags}} {{cflags_cc}} /Fd\"$pdbname\""
     }
 
+    tool("rc") {
+      command = "rc.exe /fo {{output}} {{source}}"
+      depsformat = "msvc"
+      outputs = [ "$object_subdir/{{source_name_part}}.res" ]
+      description = "RC {{output}}"
+    }
+
     tool("alink") {
       rspfile = "{{output}}.rsp"
       command = "$lib /OUT:{{output}} /nologo {{arflags}} @$rspfile"

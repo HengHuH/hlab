@@ -3,6 +3,7 @@
 executable("game") {
     sources = [
         "game.c",
+        "game.rc"
     ]
 
     configs += [
